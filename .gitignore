@@ -1,0 +1,20 @@
+# General OS/IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Backend (Node.js/TypeScript)
+Backend/node_modules/
+Backend/dist/
+Backend/.env
+Backend/npm-debug.log*
+
+# Frontend (Next.js/React)
+Frontend/node_modules/
+Frontend/.next/        # Next.js build output
+Frontend/.env
+Frontend/out/          # If you're building a static Next.js export
+Frontend/npm-debug.log*
+
+# Other common
+*.log

@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html,body {
+  background: #05101c;
+  color:white;
+  font-family: "Roboto Slab", serif;
+}
+
+.crop-box {
+  width: 400px;
+  height: 400px;
+  overflow: hidden;
+  position: relative;
+}
+
+.crop-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Crop to fill the box */
+  object-position: center; /* Focus on center */
+}
+
+
+.responsive-text {
+  font-size: 5vw;
+  white-space: nowrap;
+}
+
+.footer-text {
+  color: white;
+  text-shadow: 1px 1px 20px #00fffc;
+  text-align: center;
+  font-size: 4vw;
+  display: inline-block;
+}
+
+.footer-img {
+  vertical-align: middle;
+  margin-left: 10px;
+  width: 8vw;
+   max-width: 50px;
+}
+
+@media (min-width: 768px) {
+  .footer-text {
+    font-size: 40px;
+  }
+
+  .footer-img {
+    width: 50px;
+  }
+}
+
+footer{
+  margin-bottom: 35px;
+}
+
+@media (max-width: 768px) {
+  footer {
+    margin-bottom: 0;
+  }
+}
+
+.nav-link{
+  justify-content: center;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-right: 10px;
+  margin-left: 10px;
+  padding: 7px 15px;
+  border-radius: 10px;
+  text-decoration: none;
+  letter-spacing: 1px;
+}
+
+/* Scrollbar for chat box and input */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Input box styling */
+.input-box {
+  width: 100%;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  border-radius: 5px;
+  padding: 10px;
+  color: white;
+  font-size: 20px;
+  font-family: 'Work Sans', sans-serif;
+  resize: none;
+  overflow: auto;
+}
+
+/* Chat box container */
+.chat-box {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+.chat-input-container {
+  width: 100%;
+  margin-top: auto;
+  display: flex;
+  background-color: rgb(17, 27, 39);
+  padding: 10px 10px ;
+  border-radius: 8px;
+  z-index: 1;
+}
+
+.chat-input {
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  border-radius: 5px;
+  padding: 15px 10px 10px 10px;
+  color: white;
+  font-size: 20px;
+  font-family: 'Work Sans', sans-serif;
+  resize: none;
+  overflow-y: auto;
+  min-height: 60px;
+  max-height: 180px;
+  line-height: 24px;
+}
+
