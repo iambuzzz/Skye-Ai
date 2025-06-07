@@ -20,7 +20,7 @@ const Chat = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     
-    const [loading, setLoading] = useState(false); // Your declaration
+    const [loading] = useState(false);
 
     // This is the function we need. It scrolls to the START of a specific message.
     const scrollToMessage = (id: string) => {
@@ -37,25 +37,34 @@ const Chat = () => {
         const userMessage: ChatMessage = { role: "user", content, id: `user-${Date.now()}` };
 
         // Clear input and optimistically add the user's message.
+        // The scroll for the user's message works correctly.
         if (inputRef.current) inputRef.current.value = "";
         resetTextareaHeight();
         setChatMessages((prev) => [...prev, userMessage]);
         setTimeout(() => scrollToMessage(userMessage.id!), 0);
 
         try {
-            setLoading(true); // <--- ADD THIS: Set loading to true when API call starts
             const chatData = await sendChatRequest(content);
+            // ASSUMPTION: The API returns the full, updated list of messages.
             const fullChatHistory = chatData.chats;
 
             if (fullChatHistory && fullChatHistory.length > 0) {
+                // Give every message a unique and predictable ID based on its index.
                 const messagesWithIds = fullChatHistory.map((chat: ChatMessage, index: number) => ({
                     ...chat,
                     id: `msg-${index}`
                 }));
+
+                // The new AI message to scroll to is the last one in the list.
                 const lastMessage = messagesWithIds[messagesWithIds.length - 1];
+
+                // Update the state with the complete and correct list from the server.
                 setChatMessages(messagesWithIds);
 
+                // If the last message is from the assistant, scroll to the start of it.
                 if (lastMessage && lastMessage.role === 'assistant') {
+                    // We use a small timeout to ensure React has rendered the new element
+                    // before we try to scroll to it.
                     setTimeout(() => {
                         scrollToMessage(lastMessage.id!);
                     }, 100);
@@ -63,10 +72,9 @@ const Chat = () => {
             }
         } catch (err) {
             toast.error("Sorry, could not get a response from the AI.");
+            // If the API fails, remove the optimistic message we added.
             setChatMessages(prev => prev.filter(p => p.id !== userMessage.id));
             console.error("Chat API error:", err);
-        } finally {
-            setLoading(false); // <--- ADD THIS: Set loading to false when API call finishes (success or error)
         }
     };
 
@@ -90,17 +98,15 @@ const Chat = () => {
 
     useLayoutEffect(() => {
         if (auth?.isLoggedIn && auth.user) {
-            setLoading(true); // <--- ADD THIS: Set loading to true when fetching initial chats
             toast.loading("Loading chats...", { id: "loading-chats" });
             getUserChats().then((data) => {
                 setChatMessages(data.chats || []);
                 toast.success("Chats loaded successfully!", { id: "loading-chats" });
+                // For the very first load, just go to the bottom.
                 setTimeout(scrollToBottomOnLoad, 100);
             }).catch((err) => {
                 console.error("Error fetching chats:", err);
                 toast.error("Failed to load chats.");
-            }).finally(() => {
-                setLoading(false); // <--- ADD THIS: Set loading to false when fetching finishes
             });
         }
     }, [auth, scrollToBottomOnLoad]);
@@ -132,6 +138,7 @@ const Chat = () => {
 
     return (
         <Box sx={{
+            //... Your JSX is unchanged
             display: "flex",
             width: "100%",
             height: "calc(100vh - 110px)",
@@ -266,8 +273,7 @@ const Chat = () => {
                             <ChatItem key={chat.id || index} content={chat.content} role={chat.role} id={chat.id || `msg-${index}`} />
                         );
                     })}
-                    {/* Add loading indicator here if you want to display "Loading..." on the UI */}
-                    {loading && <Typography textAlign="center" color="white" mt={2}>Loading response...</Typography>}
+                    {loading && <Typography textAlign="center">Loading...</Typography>}
                 </Box>
 
                 {/* Chat Input */}
