@@ -4,23 +4,32 @@ import { hash, compare } from "bcrypt";
 import { createToken } from "../utils/token-manager.js";
 import { COOKIE_NAME } from "../utils/constants.js";
 
-// Make sure dotenv config is loaded, likely in app.ts, but good to ensure
+// Make sure dotenv config is loaded. It's usually in app.ts, but if not, add it here:
 // import { config } from "dotenv";
-// config(); // If not already in app.ts, you might need it here for process.env
+// config();
 
+// --- NEW COOKIE DOMAIN AND SECURE FLAG LOGIC ---
 const domain = process.env.NODE_ENV === "production"
-    ? process.env.COOKIE_DOMAIN || ".onrender.com" // For Render, use .onrender.com or your custom domain
-    : "localhost";
+    ? process.env.COOKIE_DOMAIN || ".onrender.com" // Use .onrender.com for shared cookies
+    : "localhost"; // For local development
 
 const secureCookie = process.env.NODE_ENV === "production"; // Only secure in production (HTTPS)
-
+// --- END NEW COOKIE LOGIC ---
 
 export const getAllUsers = async (req:Request, res:Response, next:NextFunction) =>{
-    // ... (no changes needed here)
+    //get all users from database
+    try {
+        const users = await User.find();
+        return res.status(200).json({message:"OK", users});
+    } catch (error) {
+        console.log(error);
+        return res.status(200).json({message:"Error", cause: error.message});
+    }
 }
 
 export const userSignup = async (req:Request, res:Response, next:NextFunction) =>{
     try {
+        //user signup
         const {name,email, password} = req.body;
         const existingUser = await User.findOne({ email });
         if(existingUser) return res.status(401).send("User already registered!");
@@ -28,7 +37,8 @@ export const userSignup = async (req:Request, res:Response, next:NextFunction) =
         const user = new User({name, email, password: hashedPassword});
         await user.save();
 
-        // Create token and store cookie
+        //create token and store cookie
+        // --- MODIFIED clearCookie CALL ---
         res.clearCookie(COOKIE_NAME,{
             path:"/",
             domain: domain, // Use dynamic domain
@@ -36,11 +46,13 @@ export const userSignup = async (req:Request, res:Response, next:NextFunction) =
             signed:true,
             secure: secureCookie, // Add secure flag
         });
+        // --- END MODIFIED clearCookie CALL ---
 
         const token = createToken(user._id.toString(),user.email, "7d");
         const expires = new Date();
         expires.setDate(expires.getDate() + 7);
 
+        // --- MODIFIED cookie CALL ---
         res.cookie(COOKIE_NAME,token, {
             path:"/",
             domain: domain, // Use dynamic domain
@@ -49,6 +61,8 @@ export const userSignup = async (req:Request, res:Response, next:NextFunction) =
             signed:true,
             secure: secureCookie, // Add secure flag
         });
+        // --- END MODIFIED cookie CALL ---
+
         return res.status(200).json({message:"OK", name:user.name, email:user.email, id:user._id.toString()});
 
     } catch (error) {
@@ -59,6 +73,8 @@ export const userSignup = async (req:Request, res:Response, next:NextFunction) =
 
 export const userLogin = async (req:Request, res:Response, next:NextFunction) =>{
     try {
+        //user login
+        
         const {email, password} = req.body;
         const user = await User.findOne({email});
         if(!user){
@@ -68,8 +84,7 @@ export const userLogin = async (req:Request, res:Response, next:NextFunction) =>
         if(!isPasswordCorrect){
             return res.status(403).send("Incorrect Password!");
         }
-
-        // Clear cookie with dynamic domain and secure flag
+        // --- MODIFIED clearCookie CALL ---
         res.clearCookie(COOKIE_NAME,{
             path:"/",
             domain: domain, // Use dynamic domain
@@ -77,12 +92,13 @@ export const userLogin = async (req:Request, res:Response, next:NextFunction) =>
             signed:true,
             secure: secureCookie, // Add secure flag
         });
+        // --- END MODIFIED clearCookie CALL ---
 
         const token = createToken(user._id.toString(),user.email, "7d");
         const expires = new Date();
         expires.setDate(expires.getDate() + 7);
 
-        // Set cookie with dynamic domain and secure flag
+        // --- MODIFIED cookie CALL ---
         res.cookie(COOKIE_NAME,token, {
             path:"/",
             domain: domain, // Use dynamic domain
@@ -91,6 +107,8 @@ export const userLogin = async (req:Request, res:Response, next:NextFunction) =>
             signed:true,
             secure: secureCookie, // Add secure flag
         });
+        // --- END MODIFIED cookie CALL ---
+
         return res.status(200).json({message:"OK", name:user.name, email:user.email, id:user._id.toString()});
 
     } catch (error) {
@@ -100,12 +118,26 @@ export const userLogin = async (req:Request, res:Response, next:NextFunction) =>
 }
 
 export const verifyUser = async (req:Request, res:Response, next:NextFunction) =>{
-    // ... (no changes needed here, as the cookie parsing happens before this)
+    try {
+        const user = await User.findById(res.locals.jwtData.id);
+        if(!user){
+            return res.status(401).send("User not registered!");
+        }
+        if(user._id.toString() !== res.locals.jwtData.id){
+            return res.status(401).send("Token ID does not match user ID!");
+        }
+        
+        return res.status(200).json({message:"OK", name:user.name, email:user.email, id:user._id.toString()});
+
+    } catch (error) {
+        console.log(error);
+        return res.status(200).json({message:"Error", cause: error.message});
+    }
 }
 
 export const userLogout = async (req:Request, res:Response, next:NextFunction) =>{
     try {
-        // Clear cookie with dynamic domain and secure flag
+        // --- MODIFIED clearCookie CALL ---
         res.clearCookie(COOKIE_NAME,{
             path:"/",
             domain: domain, // Use dynamic domain
@@ -113,6 +145,7 @@ export const userLogout = async (req:Request, res:Response, next:NextFunction) =
             signed:true,
             secure: secureCookie, // Add secure flag
         });
+        // --- END MODIFIED clearCookie CALL ---
         return res.status(200).json({message:"OK"});
     } catch (error) {
         console.log(error);
