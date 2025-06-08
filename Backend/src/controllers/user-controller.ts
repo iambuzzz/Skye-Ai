@@ -38,12 +38,13 @@ export const userSignup = async (req:Request, res:Response, next:NextFunction) =
 
         // --- MODIFIED clearCookie CALL ---
         res.clearCookie(COOKIE_NAME,{
-            path:"/",
-            domain: domain,        // <--- THIS IS NOW DYNAMIC
-            httpOnly:true,
-            signed:true,
-            secure: secureCookie,  // <--- ADDED SECURE FLAG
-        });
+    path:"/",
+    domain: domain,
+    httpOnly:true,
+    signed:true,
+    secure: secureCookie,
+    sameSite: "None", // <--- ADD THIS LINE
+});
         // --- END MODIFIED clearCookie CALL ---
 
         const token = createToken(user._id.toString(),user.email, "7d");
@@ -52,13 +53,14 @@ export const userSignup = async (req:Request, res:Response, next:NextFunction) =
 
         // --- MODIFIED cookie CALL ---
         res.cookie(COOKIE_NAME,token, {
-            path:"/",
-            domain: domain,        // <--- THIS IS NOW DYNAMIC
-            expires,
-            httpOnly:true,
-            signed:true,
-            secure: secureCookie,  // <--- ADDED SECURE FLAG
-        });
+    path:"/",
+    domain: domain,
+    expires,
+    httpOnly:true,
+    signed:true,
+    secure: secureCookie,
+    sameSite: "None", // <--- ADD THIS LINE
+});
         // --- END MODIFIED cookie CALL ---
 
         return res.status(200).json({message:"OK", name:user.name, email:user.email, id:user._id.toString()});
@@ -86,12 +88,13 @@ export const userLogin = async (req:Request, res:Response, next:NextFunction) =>
 
         // --- MODIFIED clearCookie CALL ---
         res.clearCookie(COOKIE_NAME,{
-            path:"/",
-            domain: domain,        // <--- THIS IS NOW DYNAMIC
-            httpOnly:true,
-            signed:true,
-            secure: secureCookie,  // <--- ADDED SECURE FLAG
-        });
+    path:"/",
+    domain: domain,
+    httpOnly:true,
+    signed:true,
+    secure: secureCookie,
+    sameSite: "None", // <--- ADD THIS LINE
+});
         // --- END MODIFIED clearCookie CALL ---
 
         const token = createToken(user._id.toString(),user.email, "7d");
@@ -100,13 +103,14 @@ export const userLogin = async (req:Request, res:Response, next:NextFunction) =>
 
         // --- MODIFIED cookie CALL ---
         res.cookie(COOKIE_NAME,token, {
-            path:"/",
-            domain: domain,        // <--- THIS IS NOW DYNAMIC
-            expires,
-            httpOnly:true,
-            signed:true,
-            secure: secureCookie,  // <--- ADDED SECURE FLAG
-        });
+    path:"/",
+    domain: domain,
+    expires,
+    httpOnly:true,
+    signed:true,
+    secure: secureCookie,
+    sameSite: "None", // <--- ADD THIS LINE
+});
         // --- END MODIFIED cookie CALL ---
 
         return res.status(200).json({message:"OK", name:user.name, email:user.email, id:user._id.toString()});
@@ -141,12 +145,13 @@ export const userLogout = async (req:Request, res:Response, next:NextFunction) =
     try {
         // --- MODIFIED clearCookie CALL ---
         res.clearCookie(COOKIE_NAME,{
-            path:"/",
-            domain: domain,        // <--- THIS IS NOW DYNAMIC
-            httpOnly:true,
-            signed:true,
-            secure: secureCookie,  // <--- ADDED SECURE FLAG
-        });
+    path:"/",
+    domain: domain,
+    httpOnly:true,
+    signed:true,
+    secure: secureCookie,
+    sameSite: "None", // <--- ADD THIS LINE
+});
         // --- END MODIFIED clearCookie CALL ---
         return res.status(200).json({message:"OK"});
     } catch (error) {
