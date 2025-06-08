@@ -20,7 +20,7 @@ const Chat = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     
-    const [loading, setLoading] = useState(false);
+    const [loading] = useState(false);
 
     // This is the function we need. It scrolls to the START of a specific message.
     const scrollToMessage = (id: string) => {
