@@ -3,6 +3,16 @@ import {NextFunction, Request, Response} from "express";
 import { hash, compare } from "bcrypt";
 import { createToken } from "../utils/token-manager.js";
 import { COOKIE_NAME } from "../utils/constants.js";
+
+// --- NEW COOKIE DOMAIN AND SECURE FLAG LOGIC ---
+// This determines the correct domain and secure flag based on the environment
+const domain = process.env.NODE_ENV === "production"
+    ? process.env.COOKIE_DOMAIN || ".onrender.com" // For production, use .onrender.com or your custom domain
+    : "localhost"; // For local development
+
+const secureCookie = process.env.NODE_ENV === "production"; // Cookies should only be 'secure' over HTTPS
+// --- END NEW COOKIE LOGIC ---
+
 export const getAllUsers = async (req:Request, res:Response, next:NextFunction) =>{
     //get all users from database
     try {
@@ -11,7 +21,7 @@ export const getAllUsers = async (req:Request, res:Response, next:NextFunction) 
     } catch (error) {
         console.log(error);
         return res.status(200).json({message:"Error", cause: error.message});
-        
+
     }
 }
 
@@ -25,24 +35,45 @@ export const userSignup = async (req:Request, res:Response, next:NextFunction) =
         const user = new User({name, email, password: hashedPassword});
         await user.save();
         //create token and store cookie
-        res.clearCookie(COOKIE_NAME,{path:"/" , domain:"localhost" , httpOnly:true, signed:true,});
+
+        // --- MODIFIED clearCookie CALL ---
+        res.clearCookie(COOKIE_NAME,{
+            path:"/",
+            domain: domain,        // <--- THIS IS NOW DYNAMIC
+            httpOnly:true,
+            signed:true,
+            secure: secureCookie,  // <--- ADDED SECURE FLAG
+        });
+        // --- END MODIFIED clearCookie CALL ---
+
         const token = createToken(user._id.toString(),user.email, "7d");
         const expires = new Date();
         expires.setDate(expires.getDate() + 7);
-        res.cookie(COOKIE_NAME,token, {path:"/" , domain:"localhost" , expires, httpOnly:true, signed:true,});
+
+        // --- MODIFIED cookie CALL ---
+        res.cookie(COOKIE_NAME,token, {
+            path:"/",
+            domain: domain,        // <--- THIS IS NOW DYNAMIC
+            expires,
+            httpOnly:true,
+            signed:true,
+            secure: secureCookie,  // <--- ADDED SECURE FLAG
+        });
+        // --- END MODIFIED cookie CALL ---
+
         return res.status(200).json({message:"OK", name:user.name, email:user.email, id:user._id.toString()});
 
     } catch (error) {
         console.log(error);
         return res.status(200).json({message:"Error", cause: error.message});
-        
+
     }
 }
 
 export const userLogin = async (req:Request, res:Response, next:NextFunction) =>{
     try {
         //user login
-        
+
         const {email, password} = req.body;
         const user = await User.findOne({email});
         if(!user){
@@ -52,17 +83,38 @@ export const userLogin = async (req:Request, res:Response, next:NextFunction) =>
         if(!isPasswordCorrect){
             return res.status(403).send("Incorrect Password!");
         }
-        res.clearCookie(COOKIE_NAME,{path:"/" , domain:"localhost" , httpOnly:true, signed:true,});
+
+        // --- MODIFIED clearCookie CALL ---
+        res.clearCookie(COOKIE_NAME,{
+            path:"/",
+            domain: domain,        // <--- THIS IS NOW DYNAMIC
+            httpOnly:true,
+            signed:true,
+            secure: secureCookie,  // <--- ADDED SECURE FLAG
+        });
+        // --- END MODIFIED clearCookie CALL ---
+
         const token = createToken(user._id.toString(),user.email, "7d");
         const expires = new Date();
         expires.setDate(expires.getDate() + 7);
-        res.cookie(COOKIE_NAME,token, {path:"/" , domain:"localhost" , expires, httpOnly:true, signed:true,});
+
+        // --- MODIFIED cookie CALL ---
+        res.cookie(COOKIE_NAME,token, {
+            path:"/",
+            domain: domain,        // <--- THIS IS NOW DYNAMIC
+            expires,
+            httpOnly:true,
+            signed:true,
+            secure: secureCookie,  // <--- ADDED SECURE FLAG
+        });
+        // --- END MODIFIED cookie CALL ---
+
         return res.status(200).json({message:"OK", name:user.name, email:user.email, id:user._id.toString()});
 
     } catch (error) {
         console.log(error);
         return res.status(200).json({message:"Error", cause: error.message});
-        
+
     }
 }
 
@@ -75,23 +127,31 @@ export const verifyUser = async (req:Request, res:Response, next:NextFunction) =
         if(user._id.toString() !== res.locals.jwtData.id){
             return res.status(401).send("Token ID does not match user ID!");
         }
-        
+
         return res.status(200).json({message:"OK", name:user.name, email:user.email, id:user._id.toString()});
 
     } catch (error) {
         console.log(error);
         return res.status(200).json({message:"Error", cause: error.message});
-        
+
     }
 }
 
 export const userLogout = async (req:Request, res:Response, next:NextFunction) =>{
     try {
-        res.clearCookie(COOKIE_NAME,{path:"/" , domain:"localhost" , httpOnly:true, signed:true,});
+        // --- MODIFIED clearCookie CALL ---
+        res.clearCookie(COOKIE_NAME,{
+            path:"/",
+            domain: domain,        // <--- THIS IS NOW DYNAMIC
+            httpOnly:true,
+            signed:true,
+            secure: secureCookie,  // <--- ADDED SECURE FLAG
+        });
+        // --- END MODIFIED clearCookie CALL ---
         return res.status(200).json({message:"OK"});
     } catch (error) {
         console.log(error);
         return res.status(200).json({message:"Error", cause: error.message});
-        
+
     }
 }
