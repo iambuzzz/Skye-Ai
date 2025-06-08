@@ -4,14 +4,27 @@ import { hash, compare } from "bcrypt";
 import { createToken } from "../utils/token-manager.js";
 import { COOKIE_NAME } from "../utils/constants.js";
 
-// --- NEW COOKIE DOMAIN AND SECURE FLAG LOGIC ---
-// This determines the correct domain and secure flag based on the environment
-const domain = process.env.NODE_ENV === "production"
-    ? process.env.COOKIE_DOMAIN || ".onrender.com" // For production, use .onrender.com or your custom domain
-    : "localhost"; // For local development
+// --- START: PRODUCTION-READY COOKIE CONFIGURATION ---
 
-const secureCookie = process.env.NODE_ENV === "production"; // Cookies should only be 'secure' over HTTPS
-// --- END NEW COOKIE LOGIC ---
+// Helper function to create cookie options based on the environment
+const getCookieOptions = () => {
+    const isProduction = process.env.NODE_ENV === 'production';
+    return {
+        path: "/",
+        // In production, your frontend and backend are on different subdomains of .onrender.com
+        // Setting the domain to ".onrender.com" allows the cookie to be shared between them.
+        domain: isProduction ? ".onrender.com" : "localhost",
+        // 'secure: true' is REQUIRED for 'sameSite: "none"'. It ensures the cookie is only sent over HTTPS.
+        secure: isProduction,
+        // 'sameSite: "none"' is necessary to allow the browser to send the cookie in a cross-site context
+        // (i.e., from your frontend domain to your backend domain).
+        sameSite: "none" as const,
+        httpOnly: true,
+        signed: true,
+    };
+};
+
+// --- END: PRODUCTION-READY COOKIE CONFIGURATION ---
 
 export const getAllUsers = async (req:Request, res:Response, next:NextFunction) =>{
     //get all users from database
@@ -20,8 +33,7 @@ export const getAllUsers = async (req:Request, res:Response, next:NextFunction) 
         return res.status(200).json({message:"OK", users});
     } catch (error) {
         console.log(error);
-        return res.status(200).json({message:"Error", cause: error.message});
-
+        return res.status(500).json({message:"Error", cause: error.message});
     }
 }
 
@@ -34,48 +46,33 @@ export const userSignup = async (req:Request, res:Response, next:NextFunction) =
         const hashedPassword = await hash(password,10);
         const user = new User({name, email, password: hashedPassword});
         await user.save();
-        //create token and store cookie
 
-        // --- MODIFIED clearCookie CALL ---
-        res.clearCookie(COOKIE_NAME,{
-    path:"/",
-    domain: domain,
-    httpOnly:true,
-    signed:true,
-    secure: secureCookie,
-    sameSite: "None", // <--- ADD THIS LINE
-});
-        // --- END MODIFIED clearCookie CALL ---
+        // --- UPDATED COOKIE LOGIC ---
+        const cookieOptions = getCookieOptions();
+        
+        // Clear any existing cookie before setting the new one
+        res.clearCookie(COOKIE_NAME, cookieOptions);
 
         const token = createToken(user._id.toString(),user.email, "7d");
         const expires = new Date();
         expires.setDate(expires.getDate() + 7);
-
-        // --- MODIFIED cookie CALL ---
-        res.cookie(COOKIE_NAME,token, {
-    path:"/",
-    domain: domain,
-    expires,
-    httpOnly:true,
-    signed:true,
-    secure: secureCookie,
-    sameSite: "None", // <--- ADD THIS LINE
-});
-        // --- END MODIFIED cookie CALL ---
-
-        return res.status(200).json({message:"OK", name:user.name, email:user.email, id:user._id.toString()});
+        
+        res.cookie(COOKIE_NAME, token, {
+            ...cookieOptions,
+            expires,
+        });
+        
+        return res.status(201).json({message:"OK", name:user.name, email:user.email});
 
     } catch (error) {
         console.log(error);
-        return res.status(200).json({message:"Error", cause: error.message});
-
+        return res.status(500).json({message:"Error", cause: error.message});
     }
 }
 
 export const userLogin = async (req:Request, res:Response, next:NextFunction) =>{
     try {
         //user login
-
         const {email, password} = req.body;
         const user = await User.findOne({email});
         if(!user){
@@ -86,39 +83,26 @@ export const userLogin = async (req:Request, res:Response, next:NextFunction) =>
             return res.status(403).send("Incorrect Password!");
         }
 
-        // --- MODIFIED clearCookie CALL ---
-        res.clearCookie(COOKIE_NAME,{
-    path:"/",
-    domain: domain,
-    httpOnly:true,
-    signed:true,
-    secure: secureCookie,
-    sameSite: "None", // <--- ADD THIS LINE
-});
-        // --- END MODIFIED clearCookie CALL ---
+        // --- UPDATED COOKIE LOGIC ---
+        const cookieOptions = getCookieOptions();
+
+        // Clear any existing cookie before setting the new one
+        res.clearCookie(COOKIE_NAME, cookieOptions);
 
         const token = createToken(user._id.toString(),user.email, "7d");
         const expires = new Date();
         expires.setDate(expires.getDate() + 7);
 
-        // --- MODIFIED cookie CALL ---
-        res.cookie(COOKIE_NAME,token, {
-    path:"/",
-    domain: domain,
-    expires,
-    httpOnly:true,
-    signed:true,
-    secure: secureCookie,
-    sameSite: "None", // <--- ADD THIS LINE
-});
-        // --- END MODIFIED cookie CALL ---
-
-        return res.status(200).json({message:"OK", name:user.name, email:user.email, id:user._id.toString()});
+        res.cookie(COOKIE_NAME, token, {
+            ...cookieOptions,
+            expires,
+        });
+        
+        return res.status(200).json({message:"OK", name:user.name, email:user.email});
 
     } catch (error) {
         console.log(error);
-        return res.status(200).json({message:"Error", cause: error.message});
-
+        return res.status(500).json({message:"Error", cause: error.message});
     }
 }
 
@@ -131,32 +115,22 @@ export const verifyUser = async (req:Request, res:Response, next:NextFunction) =
         if(user._id.toString() !== res.locals.jwtData.id){
             return res.status(401).send("Token ID does not match user ID!");
         }
-
-        return res.status(200).json({message:"OK", name:user.name, email:user.email, id:user._id.toString()});
+        
+        return res.status(200).json({message:"OK", name:user.name, email:user.email});
 
     } catch (error) {
         console.log(error);
-        return res.status(200).json({message:"Error", cause: error.message});
-
+        return res.status(500).json({message:"Error", cause: error.message});
     }
 }
 
 export const userLogout = async (req:Request, res:Response, next:NextFunction) =>{
     try {
-        // --- MODIFIED clearCookie CALL ---
-        res.clearCookie(COOKIE_NAME,{
-    path:"/",
-    domain: domain,
-    httpOnly:true,
-    signed:true,
-    secure: secureCookie,
-    sameSite: "None", // <--- ADD THIS LINE
-});
-        // --- END MODIFIED clearCookie CALL ---
+        // --- UPDATED COOKIE LOGIC ---
+        res.clearCookie(COOKIE_NAME, getCookieOptions());
         return res.status(200).json({message:"OK"});
     } catch (error) {
         console.log(error);
-        return res.status(200).json({message:"Error", cause: error.message});
-
+        return res.status(500).json({message:"Error", cause: error.message});
     }
 }
