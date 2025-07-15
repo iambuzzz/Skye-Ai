@@ -1,6 +1,6 @@
 import axios from "axios";
 
-axios.defaults.baseURL = "http://localhost:5000";
+axios.defaults.baseURL = "http://localhost:8000";
 axios.defaults.withCredentials = true;
 
 export const signupUser = async (name:string, email: string, password: string) => {

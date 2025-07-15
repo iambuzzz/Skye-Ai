@@ -12,7 +12,7 @@ app.use(express.json());
 
 // --- MODIFIED CORS CONFIGURATION ---
 const allowedOrigins = process.env.CORS_ORIGIN // Check if CORS_ORIGIN is set in environment
-    ? process.env.CORS_ORIGIN.split(',') // Split by comma if multiple origins are needed
+    ? process.env.CORS_ORIGIN// Split by comma if multiple origins are needed
     : "http://localhost:5173"; // Fallback to local dev origin if env var is not set
 
 app.use(cors({
