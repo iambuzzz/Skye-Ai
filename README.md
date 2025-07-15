@@ -30,11 +30,11 @@ Skye-Ai is a web application featuring an AI chatbot powered by Google's Gemini 
 
 | Homepage (Style 1)                         | Homepage (Style 2)                         |
 | :--------------------------------------- | :--------------------------------------- |
-| ![Homepage 1](path/to/home1.png) | ![Homepage 2](path/to/home2.png) |
+| ![Homepage 1](screenshots/home1.png) | ![Homepage 2](screenshots/home2.png) |
 | **Sign In Page** | **Sign Up Page** |
-| ![Sign In Page](path/to/signin.png)       | ![Sign Up Page](path/to/signup.png)       |
+| ![Sign In Page](screenshots/signin.png)       | ![Sign Up Page](screenshots/signup.png)       |
 | **Chat Interface (Example 1)** | **Chat Interface (Example 2)** |
-| ![Chat Example 1](path/to/chat1.png)     | ![Chat Example 2](path/to/chat2.png)     |
+| ![Chat Example 1](screenshots/chat1.png)     | ![Chat Example 2](screenshots/chat2.png)     |
 
 ## Deployment (Render)
 
