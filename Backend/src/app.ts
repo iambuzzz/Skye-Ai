@@ -19,9 +19,7 @@ const app = express();
 app.use(express.json());
 
 // --- MODIFIED CORS CONFIGURATION ---
-const allowedOrigins = process.env.CORS_ORIGIN // Check if CORS_ORIGIN is set in environment
-    ? process.env.CORS_ORIGIN// Split by comma if multiple origins are needed
-    : "http://localhost:5173"; // Fallback to local dev origin if env var is not set
+const allowedOrigins = process.env.CORS_ORIGIN || "http://localhost:5173";
 
 app.use(cors({
     origin: allowedOrigins, // Use the dynamically determined origin(s)
@@ -38,5 +36,6 @@ app.use(morgan("dev"));
 app.use("/api/v1", appRouter);
 
 export default app;
+
 
 
