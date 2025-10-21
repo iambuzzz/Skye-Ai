@@ -5,37 +5,31 @@ import appRouter from './routes/index.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
-config(); // Make sure this is called early to load .env variables
-// --- ADD THESE LINES FOR DEBUGGING ---
+config();
+
+// --- DEBUGGING ---
 console.log("--- DEBUGGING ENV VARIABLES ---");
 console.log("NODE_ENV:", process.env.NODE_ENV);
 console.log("COOKIE_SECRET Loaded:", !!process.env.COOKIE_SECRET);
 console.log("JWT_SECRET Loaded:", !!process.env.JWT_SECRET);
-console.log("---------------------------------");
 console.log("CORS_ORIGIN Loaded:", process.env.CORS_ORIGIN);
 console.log("---------------------------------");
 // --- END DEBUGGING ---
+
 const app = express();
 app.use(express.json());
 
-// --- MODIFIED CORS CONFIGURATION ---
+// --- CLEANED UP CORS CONFIG ---
 const allowedOrigins = process.env.CORS_ORIGIN || "http://localhost:5173";
-
 app.use(cors({
-    origin: allowedOrigins, // Use the dynamically determined origin(s)
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
 }));
-// --- END MODIFIED CORS ---
+// --- END CORS ---
 
 app.use(cookieParser(process.env.COOKIE_SECRET));
-
-// Remove it in production (consider using 'tiny' or 'combined' for production)
 app.use(morgan("dev"));
-
 app.use("/api/v1", appRouter);
 
 export default app;
-
-
-
