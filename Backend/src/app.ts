@@ -6,6 +6,13 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
 config(); // Make sure this is called early to load .env variables
+// --- ADD THESE LINES FOR DEBUGGING ---
+console.log("--- DEBUGGING ENV VARIABLES ---");
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("COOKIE_SECRET Loaded:", !!process.env.COOKIE_SECRET);
+console.log("JWT_SECRET Loaded:", !!process.env.JWT_SECRET);
+console.log("---------------------------------");
+// --- END DEBUGGING ---
 
 const app = express();
 app.use(express.json());
@@ -30,3 +37,4 @@ app.use(morgan("dev"));
 app.use("/api/v1", appRouter);
 
 export default app;
+
