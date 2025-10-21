@@ -11,16 +11,11 @@ import { COOKIE_NAME } from "../utils/constants.js";
  */
 const getCookieOptions = () => {
   const isProduction = process.env.NODE_ENV === "production";
-
   return {
     path: "/",
-    // Set domain to .onrender.com for production to allow cross-subdomain cookies
-    domain: isProduction ? ".onrender.com" : "localhost",
     httpOnly: true,
     signed: true,
-    // Use secure cookies in production (requires HTTPS)
     secure: isProduction,
-    // sameSite 'none' is required for cross-site cookies, and 'secure' must be true
     sameSite: isProduction ? "none" : "lax",
   };
 };
@@ -154,3 +149,4 @@ export const userLogout = async (req: Request, res: Response, next: NextFunction
     return res.status(500).json({ message: "Error", cause: error.message });
   }
 };
+
