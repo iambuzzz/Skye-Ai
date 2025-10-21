@@ -45,12 +45,21 @@ export const AuthProvider = ({children}: { children: React.ReactNode }) => {
         }
     }
     const signup = async (name: string, email: string, password: string) => {
-        const data = await signupUser(name, email, password);
-        if (data) {
-            setUser({ name: data.name, email: data.email });
-            setIsLoggedIn(true);
-        } else {
-            throw new Error("Login failed");
+        try { // Add try
+            const data = await signupUser(name, email, password);
+            if (data) {
+                setUser({ name: data.name, email: data.email });
+                setIsLoggedIn(true);
+            }
+        } catch (error: unknown) { // Add catch
+            if (axios.isAxiosError(error) && error.response) {
+                // Show a friendly toast to the user
+                toast.error(error.response.data); 
+            } else {
+                toast.error("Signup failed. Please try again.");
+            }
+            // We re-throw the error so the component knows it failed
+            throw new Error(axios.isAxiosError(error) ? error.response?.data : "Signup failed"); 
         }
     }
     const logout = async () => {
@@ -78,4 +87,5 @@ export const useAuth = () => {
         throw new Error("useAuth must be used within an AuthProvider");
     }
     return auth;
+
 };
