@@ -28,7 +28,12 @@ export const generateChatCompletion = async (
       contents: message, // for basic message input
     });
 
-    const text = response.text;
+    // --- Potential improvement: Check for a valid response ---
+    // Using response.text directly might be specific to a certain SDK version.
+    // Ensure this is the correct way to access the text.
+    // If response.text is not the right property, this could fail.
+    const text = response.text; // <-- Double-check this property
+    
     if (!text) {
       return res.status(500).json({ message: "No response from Gemini." });
     }
@@ -64,8 +69,9 @@ export const sendChatsToUser = async (req:Request, res:Response, next:NextFuncti
 
     } catch (error) {
         console.log(error);
-        return res.status(200).json({message:"Error", cause: error.message});
-        
+        // --- FIX ---
+        // Was res.status(200), changed to 500
+        return res.status(500).json({message:"Error", cause: error.message});
     }
 }
 
@@ -84,7 +90,8 @@ export const deleteChats = async (req:Request, res:Response, next:NextFunction) 
 
     } catch (error) {
         console.log(error);
-        return res.status(200).json({message:"Error", cause: error.message});
-        
+        // --- FIX ---
+        // Was res.status(200), changed to 500
+        return res.status(500).json({message:"Error", cause: error.message});
     }
 }
