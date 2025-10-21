@@ -12,8 +12,9 @@ console.log("NODE_ENV:", process.env.NODE_ENV);
 console.log("COOKIE_SECRET Loaded:", !!process.env.COOKIE_SECRET);
 console.log("JWT_SECRET Loaded:", !!process.env.JWT_SECRET);
 console.log("---------------------------------");
+console.log("CORS_ORIGIN Loaded:", process.env.CORS_ORIGIN);
+console.log("---------------------------------");
 // --- END DEBUGGING ---
-
 const app = express();
 app.use(express.json());
 
@@ -37,4 +38,5 @@ app.use(morgan("dev"));
 app.use("/api/v1", appRouter);
 
 export default app;
+
 
