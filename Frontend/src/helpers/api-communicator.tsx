@@ -8,7 +8,7 @@ export const signupUser = async (name:string, email: string, password: string) =
       password,
     });
 
-    if (response.status !== 200) {
+    if (response.status !== 201) {
       throw new Error("Signup failed!");
     }
 
@@ -86,5 +86,6 @@ export const logoutUser = async () => {
   const data = await response.data;
   return data;
 };
+
 
 
