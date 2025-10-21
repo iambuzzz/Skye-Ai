@@ -1,5 +1,7 @@
 import React, {useContext, useEffect, useState } from 'react';
 import {createContext} from 'react';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { checkAuthStatus, loginUser, logoutUser, signupUser } from '../helpers/api-communicator';
 type User = {
     name: string;
@@ -89,3 +91,4 @@ export const useAuth = () => {
     return auth;
 
 };
+
