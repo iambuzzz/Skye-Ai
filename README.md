@@ -4,6 +4,8 @@
 
 Skye-Ai is a web application featuring an AI chatbot powered by Google's Gemini (and potentially OpenAI). Users can interact with the chatbot to generate text-based responses. The application has a separate frontend built with React and Vite, and a backend built with Node.js and Express.js, utilizing MongoDB for data storage and user authentication. The deployment of this application was configured for Render.
 
+**Live Demo**: [https://skye-ai-frontend.onrender.com](https://skye-ai-frontend.onrender.com/)
+
 ## Tech Stack
 
 ### Frontend
