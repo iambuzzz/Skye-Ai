@@ -24,7 +24,7 @@ export const generateChatCompletion = async (
 
     const ai = configureGemini();
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash", // or "gemini-pro", "gemini-1.5-flash", etc.
+      model: "gemini-1.5-flash", // or "gemini-pro", "gemini-1.5-flash", etc.
       contents: message, // for basic message input
     });
 
@@ -95,3 +95,4 @@ export const deleteChats = async (req:Request, res:Response, next:NextFunction) 
         return res.status(500).json({message:"Error", cause: error.message});
     }
 }
+
