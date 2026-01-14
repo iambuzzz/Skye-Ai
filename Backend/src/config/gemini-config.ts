@@ -1,5 +1,5 @@
 // config/gemini-config.ts
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai"; // Library name change
 import { config } from "dotenv";
 config();
 
@@ -8,5 +8,6 @@ export const configureGemini = () => {
   if (!apiKey) {
     throw new Error("Gemini API secret is not configured.");
   }
-  return new GoogleGenAI({ apiKey });
+  // GoogleGenerativeAI ko new keyword ke saath use karein
+  return new GoogleGenerativeAI(apiKey); 
 };
