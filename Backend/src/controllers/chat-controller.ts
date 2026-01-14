@@ -2,50 +2,37 @@ import { Request, Response, NextFunction } from "express";
 import User from "../models/user.js";
 import { configureGemini } from "../config/gemini-config.js";
 
-export const generateChatCompletion = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const generateChatCompletion = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { message } = req.body;
-
     if (!message || typeof message !== "string") {
       return res.status(400).json({ message: "Invalid or missing message." });
     }
 
     const user = await User.findById(res.locals.jwtData.id);
-    if (!user) {
-      return res.status(401).json({ message: "User not found." });
-    }
+    if (!user) return res.status(401).json({ message: "User not found." });
 
-    // Add the new message to history
     user.chats.push({ role: "user", content: message });
 
-    const ai = configureGemini();
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash", // or "gemini-pro", "gemini-1.5-flash", etc.
-      contents: message, // for basic message input
-    });
+    // --- SDK FIX START ---
+    const genAI = configureGemini(); 
+    // Model name "gemini-1.5-flash" use karein stable quota ke liye
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 
-    // --- Potential improvement: Check for a valid response ---
-    // Using response.text directly might be specific to a certain SDK version.
-    // Ensure this is the correct way to access the text.
-    // If response.text is not the right property, this could fail.
-    const text = response.text; // <-- Double-check this property
-    
+    // Naya syntax: seedha model se call karein
+    const result = await model.generateContent(message);
+    const response = await result.response;
+    const text = response.text(); // text property nahi, text() function hai
+    // --- SDK FIX END ---
+
     if (!text) {
       return res.status(500).json({ message: "No response from Gemini." });
     }
 
-    // Save assistant reply
     user.chats.push({ role: "assistant", content: text });
     await user.save();
 
-    return res.status(200).json({
-      message: text,
-      chats: user.chats,
-    });
+    return res.status(200).json({ message: text, chats: user.chats });
   } catch (error: any) {
     console.error("Gemini error:", error);
     return res.status(500).json({
@@ -95,6 +82,7 @@ export const deleteChats = async (req:Request, res:Response, next:NextFunction) 
         return res.status(500).json({message:"Error", cause: error.message});
     }
 }
+
 
 
 
