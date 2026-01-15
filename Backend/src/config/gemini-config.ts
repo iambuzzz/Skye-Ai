@@ -1,13 +1,11 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { config } from "dotenv";
 config();
 
 export const configureGemini = () => {
-  const apiKey = process.env.GEN_AI_SECRET;
-
-  if (!apiKey) {
-    throw new Error("GEN_AI_SECRET missing in .env");
+  if (!process.env.GEN_AI_SECRET) {
+    throw new Error("GEN_AI_SECRET missing");
   }
 
-  return new GoogleGenerativeAI(apiKey);
+  return new GoogleGenAI({ apiKey: process.env.GEN_AI_SECRET });
 };
