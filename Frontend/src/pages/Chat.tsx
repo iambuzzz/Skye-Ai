@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useCallback, useState } from "react";
-import { Box, Avatar, Typography, Button, IconButton, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, IconButton, useMediaQuery, useTheme } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
 import { red } from "@mui/material/colors";
 import { ChatItem } from "../components/chat/chatItem";
@@ -158,3 +158,4 @@ const Chat = () => {
 };
 
 export default Chat;
+
