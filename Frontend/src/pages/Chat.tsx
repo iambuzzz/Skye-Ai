@@ -8,7 +8,7 @@ import {
   Drawer,
 } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
-import { indigo, red } from "@mui/material/colors";
+import { red } from "@mui/material/colors";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { ChatItem } from "../components/chat/chatItem";
 import { IoMdSend } from "react-icons/io";

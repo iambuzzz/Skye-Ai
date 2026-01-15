@@ -8,14 +8,6 @@ import Tooltip from "@mui/material/Tooltip";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useState } from "react";
 
-const copyToClipboard = async (text: string) => {
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch (err) {
-    console.error("Copy failed", err);
-  }
-};
-
 const LoadingDots = () => {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, height: "24px" }}>
