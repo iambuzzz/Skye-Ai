@@ -15,15 +15,25 @@ export const generateChatCompletion = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "User not found" });
     }
 
-    // save user message
     user.chats.push({ role: "user", content: message });
+
+    const recentChats = user.chats.slice(-6);
+
+    const history = recentChats.map(c => ({
+      role: c.role,
+      parts: [{ text: c.content }],
+    }));
+
+    history.push({
+      role: "user",
+      parts: [{ text: message }],
+    });
 
     const ai = configureGemini();
 
-    // ONE request to Gemini
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash",
-      contents: message,
+      contents: history,
     });
 
     const text = response.text;
@@ -77,7 +87,6 @@ export const deleteChats = async (req: Request, res: Response) => {
     const user = await User.findById(res.locals.jwtData.id);
     if (!user) return res.status(401).send("User not registered");
 
-    // correct way to clear mongoose array
     user.chats.splice(0, user.chats.length);
     await user.save();
 
