@@ -1,7 +1,6 @@
-import React, { useEffect, useLayoutEffect, useRef, useCallback, useState } from "react";
-import { Box, Avatar, Typography, Button, IconButton, useMediaQuery, useTheme } from "@mui/material";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Box, Avatar, Button, IconButton, useMediaQuery, useTheme } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
-import { red } from "@mui/material/colors";
 import { ChatItem } from "../components/chat/chatItem";
 import { IoMdSend } from "react-icons/io";
 import "../index.css";
@@ -29,7 +28,7 @@ const Chat = () => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const [loading] = useState(false);
+  // const [loading] = useState(false);
 
   const scrollToMessage = (id: string) => {
     const element = document.getElementById(id);
@@ -194,3 +193,4 @@ const Chat = () => {
 };
 
 export default Chat;
+
