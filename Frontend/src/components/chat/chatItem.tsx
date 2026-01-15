@@ -31,7 +31,7 @@ export const ChatItem = ({
       </li>
     ),
 
-    code({ inline, className, children }: any) {
+    code({ className, children }: any) {
       const match = /language-(\w+)/.exec(className || "");
 
       if (match) {
@@ -177,3 +177,4 @@ export const ChatItem = ({
     </Box>
   );
 };
+
