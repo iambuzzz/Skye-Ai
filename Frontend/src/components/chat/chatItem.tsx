@@ -1,4 +1,4 @@
-import { Box, Typography, Avatar, Divider, Link, Tooltip } from "@mui/material";
+import { Box, Typography, Avatar, Tooltip } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 import logocopy from "../../assets/logocopy.png";
 import ReactMarkdown from "react-markdown";
@@ -7,12 +7,20 @@ import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useState } from "react";
 
-export const ChatItem = ({ content, role, id }: { content: string; role: "user" | "assistant"; id: string }) => {
+type Props = {
+  content: string;
+  role: "user" | "assistant";
+  id: string;
+};
+
+export const ChatItem = ({ content, role, id }: Props) => {
   const auth = useAuth();
   const [copied, setCopied] = useState(false);
 
   const components = {
-    p: (props: any) => <Typography sx={{ my: 1.5, fontSize: "1.1rem" }} {...props} />,
+    p: (props: any) => (
+      <Typography sx={{ my: 1.2, fontSize: "1.05rem" }} {...props} />
+    ),
 
     code({ className, children }: any) {
       const match = /language-(\w+)/.exec(className || "");
@@ -41,26 +49,38 @@ export const ChatItem = ({ content, role, id }: { content: string; role: "user" 
             </Tooltip>
 
             <SyntaxHighlighter style={coldarkDark} language={match[1]}>
-              {String(children)}
+              {String(children).replace(/\n$/, "")}
             </SyntaxHighlighter>
           </Box>
         );
       }
 
-      return <code>{children}</code>;
+      return (
+        <code
+          style={{
+            background: "rgba(255,255,255,0.15)",
+            padding: "2px 6px",
+            borderRadius: 4,
+          }}
+        >
+          {children}
+        </code>
+      );
     },
   };
 
   return role === "assistant" ? (
-    <Box sx={{ display: "flex", p: 2, gap: 2 }} id={id}>
-      <Avatar><img src={logocopy} width="30" /></Avatar>
-      <Box sx={{ color: "white" }}>
+    <Box sx={{ display: "flex", gap: 2, p: 2 }} id={id}>
+      <Avatar sx={{ bgcolor: "rgb(2,58,68)" }}>
+        <img src={logocopy} width={30} />
+      </Avatar>
+      <Box sx={{ color: "white", width: "100%" }}>
         <ReactMarkdown components={components}>{content}</ReactMarkdown>
       </Box>
     </Box>
   ) : (
-    <Box sx={{ display: "flex", p: 2, gap: 2 }} id={id}>
-      <Avatar>{auth?.user?.name?.charAt(0)}</Avatar>
+    <Box sx={{ display: "flex", gap: 2, p: 2 }} id={id}>
+      <Avatar>{auth.user?.name.charAt(0)}</Avatar>
       <Typography color="white">{content}</Typography>
     </Box>
   );
