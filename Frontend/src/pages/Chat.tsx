@@ -1,5 +1,14 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Box, Avatar, Button, IconButton, useMediaQuery, useTheme } from "@mui/material";
+import {
+  Box,
+  Avatar,
+  Typography,
+  Button,
+  IconButton,
+  useMediaQuery,
+  useTheme
+} from "@mui/material";
+import { red } from "@mui/material/colors";
 import { useAuth } from "../context/AuthContext";
 import { ChatItem } from "../components/chat/chatItem";
 import { IoMdSend } from "react-icons/io";
@@ -28,14 +37,26 @@ const Chat = () => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  // const [loading] = useState(false);
 
-  const scrollToMessage = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
+  // ------------------ HELPERS ------------------
+
+  const scrollToBottom = () => {
+    if (chatAreaRef.current) {
+      chatAreaRef.current.scrollTop = chatAreaRef.current.scrollHeight;
+    }
   };
 
-  /* Load conversations on start */
+  const selectConversation = async (id: string) => {
+    setActiveId(id);
+    const convo = await getConversation(id);
+    setChatMessages(
+      convo.messages.map((m: any, i: number) => ({ ...m, id: `msg-${i}` }))
+    );
+    setTimeout(scrollToBottom, 100);
+  };
+
+  // ------------------ INITIAL LOAD ------------------
+
   useLayoutEffect(() => {
     if (!auth?.isLoggedIn) return;
 
@@ -46,15 +67,10 @@ const Chat = () => {
         setConversations(list);
 
         if (list.length > 0) {
-          setActiveId(list[0]._id);
-          const convo = await getConversation(list[0]._id);
-          const msgs = convo.messages.map((m: any, i: number) => ({
-            ...m,
-            id: `msg-${i}`,
-          }));
-          setChatMessages(msgs);
+          await selectConversation(list[0]._id);
         }
-        toast.success("Chats loaded!", { id: "loading" });
+
+        toast.success("Chats loaded", { id: "loading" });
       })
       .catch(() => toast.error("Failed to load chats", { id: "loading" }));
   }, [auth]);
@@ -66,6 +82,8 @@ const Chat = () => {
     }
   }, [auth, navigate]);
 
+  // ------------------ SEND MESSAGE ------------------
+
   const handleSubmit = async () => {
     const content = inputRef.current?.value.trim();
     if (!content || !activeId) return;
@@ -74,35 +92,16 @@ const Chat = () => {
 
     try {
       const convo = await sendMessage(activeId, content);
-      const msgs = convo.messages.map((m: any, i: number) => ({
-        ...m,
-        id: `msg-${i}`,
-      }));
-      setChatMessages(msgs);
-
-      const last = msgs[msgs.length - 1];
-      if (last) setTimeout(() => scrollToMessage(last.id!), 100);
+      setChatMessages(
+        convo.messages.map((m: any, i: number) => ({ ...m, id: `msg-${i}` }))
+      );
+      setTimeout(scrollToBottom, 100);
     } catch {
       toast.error("Failed to send message");
     }
   };
 
-  const handleDeleteChat = async () => {
-    if (!activeId) return;
-
-    await deleteConversation(activeId);
-    const list = await getConversations();
-    setConversations(list);
-    setChatMessages([]);
-
-    if (list.length > 0) {
-      setActiveId(list[0]._id);
-      const convo = await getConversation(list[0]._id);
-      setChatMessages(convo.messages.map((m: any, i: number) => ({ ...m, id: `msg-${i}` })));
-    } else {
-      setActiveId(null);
-    }
-  };
+  // ------------------ NEW CHAT ------------------
 
   const createNewChat = async () => {
     const convo = await createConversation();
@@ -110,6 +109,25 @@ const Chat = () => {
     setActiveId(convo._id);
     setChatMessages([]);
   };
+
+  // ------------------ DELETE ------------------
+
+  const handleDeleteChat = async () => {
+    if (!activeId) return;
+
+    await deleteConversation(activeId);
+    const list = await getConversations();
+    setConversations(list);
+
+    if (list.length > 0) {
+      await selectConversation(list[0]._id);
+    } else {
+      setActiveId(null);
+      setChatMessages([]);
+    }
+  };
+
+  // ------------------ TEXTAREA ------------------
 
   const resetTextareaHeight = () => {
     if (inputRef.current) {
@@ -125,53 +143,76 @@ const Chat = () => {
     }
   };
 
+  // ------------------ UI ------------------
+
   return (
-    <Box sx={{ display: "flex", width: "100%", height: "calc(100vh - 110px)", mt: 2.5, gap: 3 }}>
-      {/* Sidebar */}
+    <Box sx={{
+      display: "flex",
+      width: "100%",
+      height: "calc(100vh - 110px)",
+      marginTop: 2.5,
+      gap: 3,
+      marginBottom: 1,
+      flexDirection: isMobile ? "column" : "row",
+    }}>
+
+      {/* SIDEBAR */}
       <Box sx={{ display: isMobile ? "none" : "flex", width: "20%", flexDirection: "column" }}>
-        <Box sx={{ flex: 1, backgroundColor: "rgb(17,29,39)", borderRadius: 5, mx: 3, p: 2 }}>
-          <Avatar sx={{ mx: "auto", mt: 2 }}>
-            {auth.user?.name.charAt(0)}
+        <Box sx={{
+          display: "flex",
+          width: "100%",
+          flex: 1,
+          backgroundColor: "rgb(17,29,39)",
+          borderRadius: 5,
+          flexDirection: "column",
+          mx: 3,
+        }}>
+
+          <Avatar sx={{ mx: "auto", mt: 3, mb: 2, bgcolor: "white", color: "black", fontWeight: 700 }}>
+            {auth?.user?.name?.charAt(0).toUpperCase()}
+            {auth?.user?.name?.split(" ")[1]?.charAt(0).toUpperCase()}
           </Avatar>
 
-          <Button fullWidth sx={{ mt: 2 }} onClick={createNewChat}>
-            + New Chat
-          </Button>
+          <Typography sx={{ mx: "auto", color: "white", fontWeight: 600 }}>
+            You are talking to Skye
+          </Typography>
 
-          <Box sx={{ maxHeight: "300px", overflowY: "auto", mt: 2 }}>
+          {/* CHAT LIST */}
+          <Box sx={{ mt: 2, flex: 1, overflowY: "auto", px: 2 }}>
             {conversations.map((c) => (
               <Box
                 key={c._id}
-                onClick={async () => {
-                  setActiveId(c._id);
-                  const convo = await getConversation(c._id);
-                  setChatMessages(convo.messages.map((m: any, i: number) => ({ ...m, id: `msg-${i}` })));
-                }}
+                onClick={() => selectConversation(c._id)}
                 sx={{
                   p: 1.2,
                   mb: 1,
                   borderRadius: 2,
                   cursor: "pointer",
-                  background: activeId === c._id ? "rgba(0,255,252,0.2)" : "rgba(255,255,255,0.05)",
                   color: "white",
+                  background: activeId === c._id ? "rgba(0,255,252,0.2)" : "rgba(255,255,255,0.05)",
                 }}
               >
-                {c.title}
+                <Typography fontSize="0.9rem" noWrap>{c.title}</Typography>
               </Box>
             ))}
           </Box>
 
-          <Button onClick={handleDeleteChat} sx={{ mt: "auto" }} color="error">
+          <Button onClick={createNewChat} sx={{ mx: 2, border: "1px solid #00fffc", color: "#00fffc" }}>
+            + New Chat
+          </Button>
+
+          <Button onClick={handleDeleteChat} sx={{ mx: 2, mb: 2, bgcolor: red[400], color: "white" }}>
             Clear Conversation
           </Button>
+
         </Box>
       </Box>
 
-      {/* Chat Area */}
+      {/* CHAT AREA */}
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <Box ref={chatAreaRef} sx={{ flex: 1, overflow: "auto" }}>
           {chatMessages.map((chat, i) => (
-            <ChatItem key={i} content={chat.content} role={chat.role} id={chat.id || `msg-${i}`} />
+            <ChatItem key={i} content={chat.content} role={chat.role} id={`msg-${i}`} />
           ))}
         </Box>
 
@@ -193,4 +234,3 @@ const Chat = () => {
 };
 
 export default Chat;
-
