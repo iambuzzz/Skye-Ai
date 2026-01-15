@@ -80,7 +80,7 @@ export const deleteChats = async (req: Request, res: Response) => {
     const user = await User.findById(res.locals.jwtData.id);
     if (!user) return res.status(401).send("User not registered!");
 
-    user.chats = [];
+    user.chats.splice(0, user.chats.length);  
     await user.save();
 
     return res.status(200).json({ message: "OK" });
@@ -91,3 +91,4 @@ export const deleteChats = async (req: Request, res: Response) => {
     });
   }
 };
+
