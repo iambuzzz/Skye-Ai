@@ -12,24 +12,23 @@ export const generateChatCompletion = async (req: Request, res: Response) => {
 
     const user = await User.findById(res.locals.jwtData.id);
     if (!user) {
-      return res.status(401).json({ message: "User not found" });
+      return res.status(401).json({ message: "User not found." });
     }
 
     user.chats.push({ role: "user", content: message });
 
-    // ---- Gemini Call ----
-    const genAI = configureGemini();
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const ai = configureGemini();
 
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: message,
+    });
 
-    const result = await model.generateContent(message);
-    const response = result.response;
-    const text = response.text();
+    const text = response.text; 
 
     if (!text) {
-      return res.status(500).json({ message: "Empty response from Gemini" });
+      return res.status(500).json({ message: "No response from Gemini." });
     }
-
     user.chats.push({ role: "assistant", content: text });
     await user.save();
 
@@ -37,17 +36,18 @@ export const generateChatCompletion = async (req: Request, res: Response) => {
       message: text,
       chats: user.chats,
     });
+
   } catch (error: any) {
     console.error("Gemini error:", error);
 
-    // ---- Handle Gemini quota / rate limit ----
+    // Handle Gemini quota / rate limit
     if (
       error?.status === "RESOURCE_EXHAUSTED" ||
       error?.code === 429 ||
       error?.message?.includes("Quota")
     ) {
       return res.status(429).json({
-        message: "AI is busy. Try again in a few seconds.",
+        message: "AI is busy. Please try again in a few seconds.",
       });
     }
 
@@ -58,11 +58,13 @@ export const generateChatCompletion = async (req: Request, res: Response) => {
   }
 };
 
+
 export const sendChatsToUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(res.locals.jwtData.id);
-
-    if (!user) return res.status(401).send("User not registered!");
+    if (!user) {
+      return res.status(401).send("User not registered!");
+    }
 
     return res.status(200).json({
       message: "OK",
@@ -76,12 +78,15 @@ export const sendChatsToUser = async (req: Request, res: Response) => {
   }
 };
 
+
+
 export const deleteChats = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(res.locals.jwtData.id);
-    if (!user) return res.status(401).send("User not registered!");
-
-    user.chats.splice(0, user.chats.length);  
+    if (!user) {
+      return res.status(401).send("User not registered!");
+    }
+    user.chats.splice(0, user.chats.length);
     await user.save();
 
     return res.status(200).json({ message: "OK" });
@@ -92,5 +97,3 @@ export const deleteChats = async (req: Request, res: Response) => {
     });
   }
 };
-
-
