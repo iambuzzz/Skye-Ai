@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Box,
   Avatar,
@@ -283,3 +283,4 @@ const Chat = () => {
 };
 
 export default Chat;
+
