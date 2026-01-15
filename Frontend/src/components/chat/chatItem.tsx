@@ -1,9 +1,11 @@
-import { Box, Typography, Avatar, Divider, Link } from "@mui/material";
+import { Box, Typography, Avatar, Divider, Link, Tooltip } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 import logocopy from "../../assets/logocopy.png";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import { useState } from "react";
 
 export const ChatItem = ({
   content,
@@ -15,6 +17,7 @@ export const ChatItem = ({
   id: string;
 }) => {
   const auth = useAuth();
+  const [copied, setCopied] = useState(false);
 
   const components = {
     h1: (props: any) => <Typography variant="h4" gutterBottom {...props} />,
@@ -45,27 +48,29 @@ export const ChatItem = ({
               "&:hover .copy-btn": { opacity: 1 },
             }}
           >
-            {/* COPY ICON */}
-            <Box
-              className="copy-btn"
-              onClick={() =>
-                navigator.clipboard.writeText(String(children).trim())
-              }
-              sx={{
-                position: "absolute",
-                top: 10,
-                right: 10,
-                cursor: "pointer",
-                opacity: 0,
-                transition: "0.2s",
-                color: "#bbb",
-                fontSize: "18px",
-                userSelect: "none",
-                "&:hover": { color: "#fff" },
-              }}
-            >
-              📋
-            </Box>
+            {/* Copy Icon */}
+            <Tooltip title={copied ? "Copied!" : "Copy"} placement="top">
+              <Box
+                className="copy-btn"
+                onClick={() => {
+                  navigator.clipboard.writeText(String(children).trim());
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+                sx={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  cursor: "pointer",
+                  opacity: 0,
+                  transition: "0.2s",
+                  color: "rgba(255,255,255,0.5)",
+                  "&:hover": { color: "white" },
+                }}
+              >
+                <ContentCopyIcon sx={{ fontSize: 18 }} />
+              </Box>
+            </Tooltip>
 
             <SyntaxHighlighter
               style={coldarkDark}
@@ -177,4 +182,3 @@ export const ChatItem = ({
     </Box>
   );
 };
-
