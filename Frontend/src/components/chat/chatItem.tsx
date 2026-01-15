@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Typography, Avatar, Divider, Link } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 import logocopy from "../../assets/logocopy.png";
@@ -184,3 +183,4 @@ export const ChatItem = ({
     </Box>
   );
 };
+
