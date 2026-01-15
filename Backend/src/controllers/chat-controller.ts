@@ -1,88 +1,93 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import User from "../models/user.js";
 import { configureGemini } from "../config/gemini-config.js";
 
-export const generateChatCompletion = async (req: Request, res: Response, next: NextFunction) => {
+export const generateChatCompletion = async (req: Request, res: Response) => {
   try {
     const { message } = req.body;
+
     if (!message || typeof message !== "string") {
       return res.status(400).json({ message: "Invalid or missing message." });
     }
 
     const user = await User.findById(res.locals.jwtData.id);
-    if (!user) return res.status(401).json({ message: "User not found." });
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
 
     user.chats.push({ role: "user", content: message });
 
-    // --- SDK FIX START ---
-    const genAI = configureGemini(); 
-    // Model name "gemini-1.5-flash" use karein stable quota ke liye
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+    // ---- Gemini Call ----
+    const genAI = configureGemini();
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // Naya syntax: seedha model se call karein
     const result = await model.generateContent(message);
-    const response = await result.response;
-    const text = response.text(); // text property nahi, text() function hai
-    // --- SDK FIX END ---
+    const response = result.response;
+    const text = response.text();
 
     if (!text) {
-      return res.status(500).json({ message: "No response from Gemini." });
+      return res.status(500).json({ message: "Empty response from Gemini" });
     }
 
     user.chats.push({ role: "assistant", content: text });
     await user.save();
 
-    return res.status(200).json({ message: text, chats: user.chats });
+    return res.status(200).json({
+      message: text,
+      chats: user.chats,
+    });
   } catch (error: any) {
     console.error("Gemini error:", error);
+
+    // ---- Handle Gemini quota / rate limit ----
+    if (
+      error?.status === "RESOURCE_EXHAUSTED" ||
+      error?.code === 429 ||
+      error?.message?.includes("Quota")
+    ) {
+      return res.status(429).json({
+        message: "AI is busy. Try again in a few seconds.",
+      });
+    }
+
     return res.status(500).json({
-      message: "Internal server error",
-      error: error.message || "Something went wrong",
+      message: "Server error",
+      error: error.message,
     });
   }
 };
 
-export const sendChatsToUser = async (req:Request, res:Response, next:NextFunction) =>{
-    try {
-        const user = await User.findById(res.locals.jwtData.id);
-        if(!user){
-            return res.status(401).send("User not registered!");
-        }
-        if(user._id.toString() !== res.locals.jwtData.id){
-            return res.status(401).send("Token ID does not match user ID!");
-        }
-        
-        return res.status(200).json({message:"OK", chats: user.chats});
+export const sendChatsToUser = async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(res.locals.jwtData.id);
 
-    } catch (error) {
-        console.log(error);
-        // --- FIX ---
-        // Was res.status(200), changed to 500
-        return res.status(500).json({message:"Error", cause: error.message});
-    }
-}
+    if (!user) return res.status(401).send("User not registered!");
 
-export const deleteChats = async (req:Request, res:Response, next:NextFunction) =>{
-    try {
-        const user = await User.findById(res.locals.jwtData.id);
-        if(!user){
-            return res.status(401).send("User not registered!");
-        }
-        if(user._id.toString() !== res.locals.jwtData.id){
-            return res.status(401).send("Token ID does not match user ID!");
-        }
-        user.chats.splice(0, user.chats.length); // Clear the chats array
-        await user.save(); // Save the changes
-        return res.status(200).json({message:"OK"});
+    return res.status(200).json({
+      message: "OK",
+      chats: user.chats,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      message: "Error",
+      cause: error.message,
+    });
+  }
+};
 
-    } catch (error) {
-        console.log(error);
-        // --- FIX ---
-        // Was res.status(200), changed to 500
-        return res.status(500).json({message:"Error", cause: error.message});
-    }
-}
+export const deleteChats = async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(res.locals.jwtData.id);
+    if (!user) return res.status(401).send("User not registered!");
 
+    user.chats = [];
+    await user.save();
 
-
-
+    return res.status(200).json({ message: "OK" });
+  } catch (error: any) {
+    return res.status(500).json({
+      message: "Error",
+      cause: error.message,
+    });
+  }
+};
