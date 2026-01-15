@@ -19,7 +19,8 @@ export const generateChatCompletion = async (req: Request, res: Response) => {
 
     // ---- Gemini Call ----
     const genAI = configureGemini();
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
 
     const result = await model.generateContent(message);
     const response = result.response;
@@ -91,4 +92,5 @@ export const deleteChats = async (req: Request, res: Response) => {
     });
   }
 };
+
 
