@@ -1,161 +1,86 @@
-import { useEffect, useLayoutEffect, useRef, useCallback, useState } from "react";
-import { Box, Button, IconButton, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Avatar, Typography, Button, IconButton } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
-import { red } from "@mui/material/colors";
-import { ChatItem } from "../components/chat/chatItem";
+import { ChatItem } from "../components/chat/ChatItem";
 import { IoMdSend } from "react-icons/io";
-import "../index.css";
-import {
-  getConversations,
-  getConversation,
-  createConversation,
-  sendMessage,
-  deleteConversation
-} from "../helpers/api-communicator";
-import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { deleteUserChats, getUserChats, sendChatRequest } from "../helpers/api-communicator";
 
-type ChatMessage = { role: "user" | "assistant"; content: string; id?: string };
+type Msg = { role: "user" | "assistant"; content: string; id: string };
 
 const Chat = () => {
-  const navigate = useNavigate();
   const auth = useAuth();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatAreaRef = useRef<HTMLDivElement>(null);
-
-  const [conversationList, setConversationList] = useState<any[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-
-  const scrollToBottom = useCallback(() => {
-    if (chatAreaRef.current) {
-      chatAreaRef.current.scrollTop = chatAreaRef.current.scrollHeight;
-    }
-  }, []);
-
-  // Load sidebar + first chat
-  useLayoutEffect(() => {
-    if (!auth?.isLoggedIn) return;
-
-    const load = async () => {
-      try {
-        const list = await getConversations();
-        setConversationList(list);
-
-        if (list.length > 0) {
-          setActiveConversationId(list[0]._id);
-          const convo = await getConversation(list[0]._id);
-          setChatMessages(convo.messages);
-          setTimeout(scrollToBottom, 100);
-        }
-      } catch {
-        toast.error("Failed to load conversations");
-      }
-    };
-
-    load();
-  }, [auth, scrollToBottom]);
+  const [messages, setMessages] = useState<Msg[]>([]);
 
   useEffect(() => {
-    if (!auth?.isLoggedIn) {
-      toast.error("Please login");
-      navigate("/login");
-    }
-  }, [auth, navigate]);
+    getUserChats().then(res => {
+      const withIds = res.chats.map((c: any, i: number) => ({ ...c, id: "msg-" + i }));
+      setMessages(withIds);
+    });
+  }, []);
 
-  const handleSubmit = async () => {
-    const content = inputRef.current?.value.trim();
-    if (!content || !activeConversationId) return;
-
-    if (inputRef.current) inputRef.current.value = "";
-
-    try {
-      const convo = await sendMessage(activeConversationId, content);
-      setChatMessages(convo.messages);
-      setTimeout(scrollToBottom, 100);
-    } catch {
-      toast.error("AI failed to respond");
-    }
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleNewChat = async () => {
-    const convo = await createConversation();
-    setConversationList(prev => [convo, ...prev]);
-    setActiveConversationId(convo._id);
-    setChatMessages([]);
+  const send = async () => {
+    const text = inputRef.current?.value;
+    if (!text) return;
+
+    inputRef.current.value = "";
+
+    const res = await sendChatRequest(text);
+    const withIds = res.chats.map((c: any, i: number) => ({ ...c, id: "msg-" + i }));
+    setMessages(withIds);
+
+    setTimeout(() => scrollTo(withIds[withIds.length - 1].id), 100);
   };
 
-  const handleDeleteChat = async () => {
-    if (!activeConversationId) return;
-    await deleteConversation(activeConversationId);
-    const list = await getConversations();
-    setConversationList(list);
-    if (list.length > 0) {
-      setActiveConversationId(list[0]._id);
-      const convo = await getConversation(list[0]._id);
-      setChatMessages(convo.messages);
-    } else {
-      setActiveConversationId(null);
-      setChatMessages([]);
-    }
-  };
+  const userMessages = messages.filter(m => m.role === "user");
 
   return (
-    <Box sx={{ display: "flex", width: "100%", height: "calc(100vh - 110px)", gap: 3, mt: 2 }}>
-      
-      {/* Sidebar */}
-      {!isMobile && (
-        <Box sx={{ width: "20%", background: "rgb(17,29,39)", borderRadius: 5, p: 2 }}>
-          <Button onClick={handleNewChat} sx={{ color: "white", border: "1px solid #00fffc", mb: 2 }}>
-            + New Chat
-          </Button>
+    <Box sx={{ display: "flex", height: "100vh" }}>
 
-          {conversationList.map(c => (
+      {/* LEFT SIDEBAR */}
+      <Box sx={{ width: "20%", p: 2, background: "#111d27" }}>
+        <Avatar sx={{ mx: "auto", mb: 2 }}>
+          {auth.user?.name.charAt(0)}
+        </Avatar>
+
+        <Button fullWidth sx={{ mb: 2 }} onClick={() => chatAreaRef.current?.scrollTo({ top: 0 })}>
+          + New Chat
+        </Button>
+
+        <Box sx={{ overflowY: "auto", maxHeight: "70%" }}>
+          {userMessages.map((m, i) => (
             <Box
-              key={c._id}
-              onClick={async () => {
-                setActiveConversationId(c._id);
-                const convo = await getConversation(c._id);
-                setChatMessages(convo.messages);
-              }}
-              sx={{
-                p: 1.5,
-                my: 0.5,
-                borderRadius: 2,
-                cursor: "pointer",
-                background: c._id === activeConversationId ? "rgba(0,255,252,.2)" : "transparent",
-                color: "white"
-              }}
+              key={i}
+              onClick={() => scrollTo("msg-" + i * 2)}
+              sx={{ p: 1, mb: 1, bgcolor: "rgba(255,255,255,0.05)", cursor: "pointer" }}
             >
-              {c.title}
+              {m.content.slice(0, 30)}…
             </Box>
           ))}
-
-          <Button onClick={handleDeleteChat} sx={{ bgcolor: red[400], mt: 2, color: "white" }}>
-            Delete Chat
-          </Button>
-        </Box>
-      )}
-
-      {/* Chat area */}
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <Box ref={chatAreaRef} sx={{ flex: 1, overflow: "auto" }}>
-          {chatMessages.map((m, i) => (
-            <ChatItem key={i} content={m.content} role={m.role} id={`msg-${i}`} />
-          ))}
         </Box>
 
-        <div className="chat-input-container">
-          <textarea ref={inputRef} className="chat-input" placeholder="Ask anything..." />
-          <IconButton onClick={handleSubmit}><IoMdSend /></IconButton>
-        </div>
+        <Button color="error" fullWidth onClick={deleteUserChats}>Clear Conversation</Button>
       </Box>
+
+      {/* CHAT */}
+      <Box sx={{ flex: 1, p: 2, display: "flex", flexDirection: "column" }}>
+        <Box ref={chatAreaRef} sx={{ flex: 1, overflowY: "auto" }}>
+          {messages.map(m => <ChatItem key={m.id} {...m} />)}
+        </Box>
+
+        <Box sx={{ display: "flex" }}>
+          <textarea ref={inputRef} style={{ flex: 1 }} />
+          <IconButton onClick={send}><IoMdSend /></IconButton>
+        </Box>
+      </Box>
+
     </Box>
   );
 };
 
 export default Chat;
-
